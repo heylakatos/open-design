@@ -1,5 +1,16 @@
 /**
  * Discovery + planning + huashu-philosophy directives.
+ * 
+ * 👆 这个Prompt负责三件事:
+ * discovery (向用户提问以理解需求)、planning(规划任务）、huashu-philosophy("花叔"风格的设计哲学指令).
+ *
+ *
+ * 👇 
+ * + 这个项目的最终System Prompt是多层拼接的("composed")
+ * + 这个Prompt在前, OD 官方 Designer Prompt(`OFFICIAL_DESIGNER_PROMPT`) 在后
+ * + LLM 在读到指令冲突时, 通常先入为主 —— 所以把"硬规则"放在前面, 让它压制Designer Prompt里那种偏软的措辞("小改动可以跳过提问")
+ * + 换句话说: 作者故意用顺序来博弈优先级, 确保即使是小需求, 模型也要先走 Discovery 流程, 而不是直接动手
+ *
  *
  * This is the dominant layer of the composed system prompt. It stacks
  * BEFORE the official OD designer prompt so the hard rules below — emit
@@ -7,6 +18,8 @@
  * extraction on turn 2, plan with TodoWrite on turn 3 — beat the softer
  * "skip questions for small tweaks" wording in the base prompt.
  *
+ * 👇 3回合的执行弧(arc)
+ * 
  * The arc:
  *   Turn 1  →  one prose line + <question-form id="discovery"> + STOP
  *   Turn 2  →  branch on the brand answer:
@@ -16,11 +29,34 @@
  *                · otherwise                   →  TodoWrite directly
  *   Turn 3+ →  work the plan, show progress live, build, self-check, emit <artifact>.
  *
+ * 👇 这个Prompt不是凭空写的，是从两个开源 skills 蒸馏出来的:
+ *  + alchaincyf/huashu-design —— 贡献了:
+ *    - Junior-Designer mode: 扮演初级设计师的姿态(多问、多确认)
+ *    - variations-not-answers: 给变体而非"标准答案", 强调可选项
+ *    - anti-AI-slop: 避免那种典型 AI 流水线作品的廉价感
+ *    - embody-the-specialist: 让模型代入领域专家身份
+ *   + op7418/guizang-ppt-skill —— 贡献了:
+ *    - pre-flight asset reads: 开工前先把素材读一遍
+ *    - P0 self-check: 完成后做最关键级别的自检
+ *    - theme-rhythm rules: 主题与节奏一致性的规则
+ * 
+ * 
  * Distilled from alchaincyf/huashu-design (Junior-Designer mode,
  * variations-not-answers, anti-AI-slop, embody-the-specialist) and
  * op7418/guizang-ppt-skill (pre-flight asset reads, P0 self-check,
  * theme-rhythm rules).
  */
+
+
+/**
+ * Visual tone: 视觉调性
+ * Playful / illustrative: 活泼的/插画风
+ * Brutalist / experimental: 粗野的/实验性的
+ * fidelity: 保真度
+ * 
+ * palette swatches + type sample + mood blurb + real-world references: 调色样卡 + 字体样例 + 情绪描述 + 真实世界的参考
+ */
+
 import { renderDirectionFormBody, renderDirectionSpecBlock } from './directions';
 
 export const DISCOVERY_AND_PHILOSOPHY = `# OD core directives (read first — these override anything later in this prompt)
