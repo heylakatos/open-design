@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createHtmlArtifactManifest } from '../artifacts/manifest';
 import { createArtifactParser } from '../artifacts/parser';
 import { useT } from '../i18n';
 import { streamMessage } from '../providers/anthropic';
@@ -11,6 +12,7 @@ import {
 } from '../providers/registry';
 import { composeSystemPrompt } from '../prompts/system';
 import { navigate } from '../router';
+import type { TodoItem } from '../runtime/todos';
 import {
   createConversation,
   deleteConversation as deleteConversationApi,
@@ -53,6 +55,10 @@ interface Props {
   daemonLive: boolean;
   onModeChange: (mode: AppConfig['mode']) => void;
   onAgentChange: (id: string) => void;
+  onAgentModelChange: (
+    id: string,
+    choice: { model?: string; reasoning?: string },
+  ) => void;
   onRefreshAgents: () => void;
   onOpenSettings: () => void;
   onBack: () => void;
@@ -72,6 +78,7 @@ export function ProjectView({
   daemonLive,
   onModeChange,
   onAgentChange,
+  onAgentModelChange,
   onRefreshAgents,
   onOpenSettings,
   onBack,
@@ -490,6 +497,7 @@ export function ProjectView({
           handlers.onError(new Error('Pick a local agent first (top bar).'));
           return;
         }
+        const choice = config.agentModels?.[config.agentId];
         void streamViaDaemon({
           agentId: config.agentId,
           history: nextHistory,
@@ -498,6 +506,8 @@ export function ProjectView({
           handlers,
           projectId: project.id,
           attachments: attachments.map((a) => a.path),
+          model: choice?.model ?? null,
+          reasoning: choice?.reasoning ?? null,
         });
       } else {
         pushEvent({ kind: 'status', label: 'requesting', detail: config.model });
@@ -544,7 +554,19 @@ export function ProjectView({
       }
       if (savedArtifactRef.current === fileName) return;
       savedArtifactRef.current = fileName;
-      const file = await writeProjectTextFile(project.id, fileName, art.html);
+      const manifest = createHtmlArtifactManifest({
+        entry: fileName,
+        title: art.title || art.identifier || fileName,
+        sourceSkillId: project.skillId ?? undefined,
+        designSystemId: project.designSystemId,
+        metadata: {
+          identifier: art.identifier,
+          inferred: false,
+        },
+      });
+      const file = await writeProjectTextFile(project.id, fileName, art.html, {
+        artifactManifest: manifest,
+      });
       if (file) {
         setFilesRefresh((n) => n + 1);
         // Auto-open the freshly-persisted artifact as a tab so the user
@@ -554,6 +576,27 @@ export function ProjectView({
       }
     },
     [project.id, projectFiles, requestOpenFile],
+  );
+
+  const handleContinueRemainingTasks = useCallback(
+    (_assistantMessage: ChatMessage, todos: TodoItem[]) => {
+      if (streaming || todos.length === 0) return;
+      const remainingList = todos
+        .map((todo, i) => {
+          const label =
+            todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content;
+          return `${i + 1}. [${todo.status}] ${label}`;
+        })
+        .join('\n');
+      const prompt =
+        'Continue the remaining unfinished tasks from the previous run. ' +
+        'Do not redo completed work. Focus only on these unfinished todos:\n\n' +
+        `${remainingList}\n\n` +
+        'Before making changes, inspect the current project files as needed. ' +
+        'Update TodoWrite as you complete each remaining task.';
+      void handleSend(prompt, []);
+    },
+    [streaming, handleSend],
   );
 
   const handleExportAsPptx = useCallback(
@@ -728,6 +771,7 @@ export function ProjectView({
             daemonLive={daemonLive}
             onModeChange={onModeChange}
             onAgentChange={onAgentChange}
+            onAgentModelChange={onAgentModelChange}
             onOpenSettings={onOpenSettings}
             onRefreshAgents={onRefreshAgents}
             onBack={onBack}
@@ -754,6 +798,7 @@ export function ProjectView({
             if (streaming) return;
             void handleSend(text, []);
           }}
+          onContinueRemainingTasks={handleContinueRemainingTasks}
           onNewConversation={handleNewConversation}
           conversations={conversations}
           activeConversationId={activeConversationId}
