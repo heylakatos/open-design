@@ -47,16 +47,6 @@
  * theme-rhythm rules).
  */
 
-
-/**
- * Visual tone: 视觉调性
- * Playful / illustrative: 活泼的/插画风
- * Brutalist / experimental: 粗野的/实验性的
- * fidelity: 保真度
- * 
- * palette swatches + type sample + mood blurb + real-world references: 调色样卡 + 字体样例 + 情绪描述 + 真实世界的参考
- */
-
 import { renderDirectionFormBody, renderDirectionSpecBlock } from './directions';
 
 export const DISCOVERY_AND_PHILOSOPHY = `# OD core directives (read first — these override anything later in this prompt)
