@@ -384,6 +384,10 @@ export interface Dict {
   'fileViewer.open': string;
   'fileViewer.imageMeta': string;
   'fileViewer.sketchMeta': string;
+  'fileViewer.markdownStreamingMeta': string;
+  'fileViewer.markdownErrorMeta': string;
+  'fileViewer.markdownStreamingStatus': string;
+  'fileViewer.markdownErrorStatus': string;
   'fileViewer.reload': string;
   'fileViewer.reloadDisk': string;
   'fileViewer.copy': string;
