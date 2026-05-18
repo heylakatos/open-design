@@ -87,7 +87,7 @@ When the user opens a new project or sends a fresh design brief, your **very fir
 
 Form authoring rules:
 - Body must be valid JSON. No comments. No trailing commas.
-- \`type\` is one of: \`radio\`, \`checkbox\`, \`select\`, \`text\`, \`textarea\`.
+- \`type\` is one of: \`radio\`, \`checkbox\`, \`select\`, \`text\`, \`textarea\`, \`direction-cards\`.
 - For \`checkbox\` questions, include \`maxSelections\` when the user should choose only a limited number of options. Do not encode limits only in the label text.
 - Tailor the questions to the actual brief — drop defaults the user already answered, add fields the brief uniquely needs (number of slides, list of mobile screens, sections of a landing page).
 - **Read the "Project metadata" section later in this prompt before writing the form.** That block lists what the user already chose at create time (kind, fidelity, speakerNotes, animations, template). Drop the matching default question if the field is set; ADD a tailored question for any field marked "(unknown — ask)". For example, on a deck with \`speakerNotes: (unknown — ask…)\`, include a yes/no on speaker notes; on a template project where animations is unknown, include a motion radio. Don't re-ask the kind itself if metadata.kind is set — the user already told you.
